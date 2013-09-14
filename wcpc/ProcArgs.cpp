@@ -20,8 +20,8 @@ void PrintHelp()
     PrintMessage.PrintIt(stderr, IDS_HELP_MSG9, 0);
     ////////////////////////////////////////////////////////////////
     // 下方放置参数解释
-    //PrintMessage.PrintIt(stderr, IDS_HELP_MSG10, 0);
-    //PrintMessage.PrintIt(stderr, IDS_HELP_MSG11, 0);
+    PrintMessage.PrintIt(stderr, IDS_HELP_MSG10, 0);
+    PrintMessage.PrintIt(stderr, IDS_HELP_MSG11, 0);
     PrintMessage.PrintIt(stderr, IDS_HELP_MSG12, 0);
     PrintMessage.PrintIt(stderr, IDS_HELP_MSG13, 0);
     PrintMessage.PrintIt(stderr, IDS_HELP_MSG14, 0);

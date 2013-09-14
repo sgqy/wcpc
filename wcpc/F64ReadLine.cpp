@@ -34,8 +34,7 @@ void F64ReadLine::open(const wchar_t* fn)
         return;
     }
     GetFileSizeEx(hFile, &filesz);
-    LARGE_INTEGER p = {0};
-    SetFilePointerEx(hFile, p, NULL, FILE_BEGIN);
+    setpointer(0);
     blocksz = filesz.QuadPart > ringsz ? ringsz : filesz.QuadPart;
 }
 
@@ -51,29 +50,45 @@ int F64ReadLine::readline(void* cs, const int csl)
     char* p = (char*)cs;
 
     while(1) {
+        bool break_mark = false;
         if(!(ringidx = ringidx % ringsz)) {
             ReadFile(hFile, ringbuff, ringsz, (LPDWORD)&blocksz, NULL);
             if(blocksz < ringsz) {
                 eof_flag = true; // 数组的输入端达到eof
             }
         }
+        bool u16test = false;
         while(wl < csl && ringidx < blocksz) { // 将当前圈内的数据导出
-            if('\n' == (p[wl++] = ringbuff[ringidx++])) {
-                break; // break mark 1
+            p[wl++] = ringbuff[ringidx++]; // 此表达式有且仅有一个, 否则严重 bug
+
+            if(u16test && !p[wl-1]) {
+                break_mark = true;
+                break;
             }
+            u16test = false; // 测试一次不成功必须关闭, 否则不论是否遇到 '\n', 一旦遇到 0 都会断开
+            if(p[wl-1] == '\n') {
+
+                if(codepage != 1200) {
+                    break_mark = true;
+                    break;
+                }
+                u16test = true;
+            }
+
         }
         if(eof_flag && ringidx == blocksz) {
             is_eof = true; // 数组的输出端, 即本身达到了eof
-            // break mark 2
+            break_mark = true;
         }
 
-        if(p[wl-1] == '\n' || eof()) { // 退出此循环
+        p[wl] = 0; // 截断
+
+        if(break_mark) { // 退出此循环
             break;
         }
         if(wl == csl) { // 真糟糕, 这一行没见到行尾
             return -1;
         }
-        p[wl] = 0; // 截断
     }
     return wl; 
     // 一旦除以 2, UTF-16LE 编码的字符数会少 1
@@ -127,30 +142,42 @@ void F64ReadLine::TestEnc(void)
 
     char* buf = new char[MEMPROTECT(32768)];
     int size = 0;
+    setpointer(0);
     ReadFile(hFile, buf, 32768, (LPDWORD)&size, NULL);
-    if(size > 2 && buf[0] == 0xEF && buf[1] == 0xBB && buf[2] == 0xBF) {
-        Args.setSourceCodepage(codepage = 65001);
-        setpointer(3);
-    } else if(size > 1) {
-        if(buf[0] == 0xFF && buf[1] == 0xFE) {
-            Args.setSourceCodepage(codepage = 1200);
-            setpointer(2);
-        } else if(buf[0] == 0xFE && buf[1] == 0xFF) {
-            Args.setSourceCodepage(codepage = 1201);
-            setpointer(2);
-        } else if(TRUE == IsTextUnicode(buf, 32768, NULL)) {
-            Args.setSourceCodepage(codepage = 1200);
-            setpointer(2);
-        } else {
-        
+    do {
+        if(size > 2) { // 逆天等级的 bug 发现! 非 unsigned 情况下, 0xFF 和 '\xFF' 不同!
+            if(buf[0] == '\xEF' && buf[1] == '\xBB' && buf[2] == '\xBF') {
+                Args.setSourceCodepage(codepage = 65001);
+                setpointer(3);
+                break;
+            }
         }
-    } else if(isutf8(buf, 32768)) {
-        Args.setSourceCodepage(codepage = 65001);
-        setpointer(0);
-    } else {
+        if(size > 1) {
+            if(buf[0] == '\xFF' && buf[1] == '\xFE') {
+                Args.setSourceCodepage(codepage = 1200);
+                setpointer(2);
+                break;
+            }
+            if(buf[0] == '\xFE' && buf[1] == '\xFF') {
+                Args.setSourceCodepage(codepage = 1201);
+                setpointer(2);
+                break;
+            }
+            if(TRUE == IsTextUnicode(buf, 32768, NULL)) {
+                Args.setSourceCodepage(codepage = 1200);
+                setpointer(2);
+                break;
+            }
+        }
+        if(isutf8(buf, 32768)) {
+            Args.setSourceCodepage(codepage = 65001);
+            setpointer(0);
+            break;
+        }
         Args.setSourceCodepage(codepage = GetACP());
         setpointer(0);
-    }
+        break;
+    } while(0);
     delete [] buf;
 }
 

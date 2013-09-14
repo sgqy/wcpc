@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>wcpc.exe -A -t 950 -i 仕途风流.txt -o s.txt -f 936 -W</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>wcpc.exe -i u16.txt -o zz.txt -t 936 -W</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments>wcpc.exe -t 1201 -i 仕途风流.txt -o s.txt -f 936 -W</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>wcpc.exe -i s.txt -o k.txt -t 936 -W -A</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

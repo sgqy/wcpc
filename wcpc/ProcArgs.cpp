@@ -60,9 +60,6 @@ void ProcessArgs(int argc, wchar_t* argv[])
         case L'A':
             Args.setAnalyze();
             break;
-        case L'E':
-            Args.setForceExit();
-            break;
         case L'h':
         case L'?':
             Args.setHelp();

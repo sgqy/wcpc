@@ -11,15 +11,19 @@ F64PushLine::~F64PushLine(void)
 }
 
 
-F64PushLine::F64PushLine(const wchar_t* fn)
+F64PushLine::F64PushLine()
     : is_good(true)
     , hFile(INVALID_HANDLE_VALUE)
     , ringbuff(0)
-    , ringsz(0x100000)
+    , ringsz(0x100000) // 环形圆圈大小为 1 MiB // 后续添加定制功能
     , ringidx(0)
 {
     ringbuff = new char[MEMPROTECT(ringsz)];
-    hFile = CreateFileW(fn, GENERIC_WRITE, 0, 
+}
+
+void F64PushLine::open(const wchar_t* fn)
+{
+    hFile = CreateFileW(fn, GENERIC_WRITE, FILE_SHARE_READ, 
         NULL, CREATE_ALWAYS, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
     if(hFile == INVALID_HANDLE_VALUE) {
         is_good = false;
@@ -30,6 +34,7 @@ F64PushLine::F64PushLine(const wchar_t* fn)
 
 int F64PushLine::pushline(const void* cs, const int csl)
 {
+    if(!is_good) return -1;
     char* p = (char*)cs;
     int i = 0;
     while(i < csl) {

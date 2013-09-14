@@ -12,7 +12,8 @@ protected:
     int ringsz;
     int ringidx;
 public:
-    F64PushLine(const wchar_t* fn);
+    F64PushLine();
+    void open(const wchar_t* fn);
     bool good(void) {
         return is_good;
     }

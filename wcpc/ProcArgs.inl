@@ -160,5 +160,5 @@ inline void ProcArgs_t::TestGood(void)
 {
     if(!import_file) _good = false;
     if(!export_file && !is_analyze) _good = false;
-    if(source_codepage == NO_CODEPAGE) _good = false;
+    if(target_codepage == 1200 || target_codepage == 1201 || target_codepage == 65001) is_warning = false;
 }

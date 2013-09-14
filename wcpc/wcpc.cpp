@@ -22,6 +22,9 @@ int wmain(int argc, wchar_t* argv[])
         return 0;
     } catch(const int& e) {
         return e; // 有了资源文件这里就简化了
+    } catch(std::bad_alloc&) { // 简单捕捉内存分配问题
+        PrintMessage.PrintIt(stderr, IDS_MEMORY_ALLOC_ERROR_STR, Args.getImportFile());
+        throw EC_MEMORY_ALLOC_ERROR;
     } catch(...) {
         return EC_UNKNOWN_ERROR;
     }

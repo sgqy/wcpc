@@ -19,7 +19,8 @@ protected:
     void setpointer(const int i);
     bool isutf8(const char* p, const int len);
 public:
-    F64ReadLine(const wchar_t* fn);
+    F64ReadLine();
+    void open(const wchar_t* fn);
     int readline(void* cs, const int csl);
     bool eof(void) {
         return is_eof;

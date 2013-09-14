@@ -12,6 +12,9 @@
 #include <io.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#ifndef _DEBUG
+#include <afxwin.h> // 为了静态编译才包含的 Orz
+#endif
 #include <Windows.h>
 
 #define STATIC_GETOPT

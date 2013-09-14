@@ -11,18 +11,22 @@ F64ReadLine::~F64ReadLine(void)
 }
 
 
-F64ReadLine::F64ReadLine(const wchar_t* fn)
+F64ReadLine::F64ReadLine()
     : is_good(true)
     , is_eof(false)
     , hFile(INVALID_HANDLE_VALUE)
     , ringbuff(0)
-    , ringsz(0x100000) // 读入文件的环形缓冲区大小
+    , ringsz(0x100000)  // 环形圆圈大小为 1 MiB // 后续添加定制功能
     , ringidx(0)
     , blocksz(0)
     , codepage(0)
     , eof_flag(false)
 {
     ringbuff = new char[MEMPROTECT(ringsz)];
+}
+
+void F64ReadLine::open(const wchar_t* fn)
+{
     hFile = CreateFileW(fn, GENERIC_READ, FILE_SHARE_READ, 
         NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
     if(hFile == INVALID_HANDLE_VALUE) {
@@ -37,11 +41,12 @@ F64ReadLine::F64ReadLine(const wchar_t* fn)
 
 
 int F64ReadLine::readline(void* cs, const int csl)
+    // 将这个环形数组的每一圈看作一个有输入输出的容器
 {
     if(!csl) return 0;
     if(eof()) return 0;
 
-    int wl = 0;
+    int wl = 0; // 读取到的正行长度
 
     char* p = (char*)cs;
 
@@ -49,25 +54,26 @@ int F64ReadLine::readline(void* cs, const int csl)
         if(!(ringidx = ringidx % ringsz)) {
             ReadFile(hFile, ringbuff, ringsz, (LPDWORD)&blocksz, NULL);
             if(blocksz < ringsz) {
-                eof_flag = true;
+                eof_flag = true; // 数组的输入端达到eof
             }
         }
-        while(wl < csl && ringidx < blocksz) {
+        while(wl < csl && ringidx < blocksz) { // 将当前圈内的数据导出
             if('\n' == (p[wl++] = ringbuff[ringidx++])) {
-                break;
+                break; // break mark 1
             }
         }
         if(eof_flag && ringidx == blocksz) {
-            is_eof = true;
+            is_eof = true; // 数组的输出端, 即本身达到了eof
+            // break mark 2
         }
 
-        if(p[wl-1] == '\n' || eof()) {
+        if(p[wl-1] == '\n' || eof()) { // 退出此循环
             break;
         }
-        if(wl == csl) {
+        if(wl == csl) { // 真糟糕, 这一行没见到行尾
             return -1;
         }
-        p[wl] = 0;
+        p[wl] = 0; // 截断
     }
     return wl; 
     // 一旦除以 2, UTF-16LE 编码的字符数会少 1
@@ -120,7 +126,8 @@ void F64ReadLine::TestEnc(void)
     if(Args.getSourceCodepage() != NO_CODEPAGE) return;
 
     char* buf = new char[MEMPROTECT(32768)];
-    int size = readline(buf, 32768);
+    int size = 0;
+    ReadFile(hFile, buf, 32768, (LPDWORD)&size, NULL);
     if(size > 2 && buf[0] == 0xEF && buf[1] == 0xBB && buf[2] == 0xBF) {
         Args.setSourceCodepage(codepage = 65001);
         setpointer(3);
